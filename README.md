@@ -1,2 +1,2 @@
-# API-Students
-This project uses an API to display, delete, update, and add students.
+# TP DISEÑO WEB
+Valentina Olmos, Karina Maidana, Giuliana Manzo, Florencia Sampietro, Yamila Sanchez
