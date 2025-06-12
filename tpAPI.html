@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<!-- TP Diseño web Valentina Olmos, Giuliana Manzo, Florencia Sampietro, Yamila Sanchez, Karina Maidana -->
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestión de Estudiantes</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #ece2d0;
+    }
+
+    h1,
+    h2 {
+      color: #7a6563;
+    }
+
+    form {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #d3a588;
+      border-radius: 8px;
+      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    input,
+    button {
+      margin: 5px 0;
+      padding: 10px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #e56399;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background-color: #fff;
+    }
+
+    th,
+    td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #d3a588;
+      color: #333;
+    }
+
+    #tabla-estudiantes {
+      display: none;
+    }
+
+    .acciones button {
+      margin-right: 5px;
+      width: auto;
+    }
+
+    .modal { /* Diseño externo de el modal para que se muestre correctamente */
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content { /* Diseño interno de el modal */
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      width: 300px;
+    }
+
+    .modal-content input {
+      width: 100%;
+    }
+
+    .modal-content h3 {
+      margin-top: 0;
+      color: #7a6563;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Página de gestión de Estudiantes</h1>
+  <button onclick="listarEstudiantes()">Listar Estudiantes</button>
+
+  <table id="tabla-estudiantes"> <!-- Estructura de la tabla que lista estudiantes -->
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Apellido</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>Agregar Estudiante</h2> <!-- Estructura de el formulario para agregar estudiantes -->
+  <form id="form-agregar" onsubmit="agregarEstudiante(event)">
+    <input type="text" id="nombre" placeholder="Nombre" required/>
+    <input type="text" id="apellido" placeholder="Apellido" required />
+    <button type="submit">Agregar</button>
+  </form>
+
+  <div id="modal-editar" class="modal"> <!-- Estructura de el contenedor de la ventana modal de editar -->
+    <div class="modal-content">
+      <h3>Editar Estudiante</h3>
+      <input type="text" id="editar-nombre" placeholder="Nuevo Nombre" required>
+      <input type="text" id="editar-apellido" placeholder="Nuevo Apellido" required>
+      <button onclick="confirmarEditar()">Guardar</button>
+      <button onclick="cerrarModalEditar()">Cancelar</button>
+    </div>
+  </div>
+
+  <div id="modal-eliminar" class="modal"> <!-- Estructura de el contenedor de la ventana modal de eliminar -->
+    <div class="modal-content">
+      <h3>¿Eliminar estudiante?</h3>
+      <p>¿Estás segura/o que querés eliminar este estudiante?</p>
+      <button onclick="confirmarEliminar()">Sí, eliminar</button>
+      <button onclick="cerrarModalEliminar()">Cancelar</button>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "https://681cdcfaf74de1d219ae0c04.mockapi.io"; //Url de la API de estudiantes
+
+    let idEditar = null;
+    let idEliminar = null;
+
+    function listarEstudiantes() { //FUNCION PARA LISTAR ESTUDIANTES EN LA TABLA
+      fetch(`${API_URL}/students`)
+        .then(response => response.json())
+        .then(data => {
+          const tabla = document.getElementById('tabla-estudiantes');
+          const tbody = tabla.querySelector('tbody');
+          tbody.innerHTML = '';
+
+          if (data.length === 0) {
+            tabla.style.display = 'none';
+            alert("No hay estudiantes registrados.");
+            return;
+          }
+
+          tabla.style.display = 'table';
+
+          data.forEach(estudiante => {
+            const fila = document.createElement('tr');
+            fila.innerHTML = `
+            <td>${estudiante.id}</td>
+            <td>${estudiante.firstName}</td>
+            <td>${estudiante.lastName}</td>
+            <td>
+              <button onclick="abrirModalEditar('${estudiante.id}', '${estudiante.firstName}', '${estudiante.lastName}')">Editar</button>
+              <button onclick="abrirModalEliminar('${estudiante.id}')">Eliminar</button>
+            </td>
+          `;
+            tbody.appendChild(fila);
+          });
+        })
+        .catch(error => {
+          alert("Error al listar estudiantes: " + error.message);
+        });
+    }
+
+    function agregarEstudiante(event) { //FUNCION PARA AGREGAR ESTUDIANTE A LA API
+      event.preventDefault(); 
+      const nombre = document.getElementById('nombre').value.trim();
+      const apellido = document.getElementById('apellido').value.trim();
+
+      fetch(`${API_URL}/students`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firstName: nombre, lastName: apellido })
+      })
+        .then(() => {
+          alert("Estudiante agregado correctamente.");
+          document.getElementById('form-agregar').reset();
+          listarEstudiantes();
+        })
+        .catch(error => {
+          alert("Error al agregar estudiante: " + error.message);
+        });
+    }
+
+    // FUNCIONES DE EL MODAL EDITAR
+    function abrirModalEditar(id, nombre, apellido) {
+      idEditar = id;
+      document.getElementById('editar-nombre').value = nombre;
+      document.getElementById('editar-apellido').value = apellido;
+      document.getElementById('modal-editar').style.display = 'flex';
+    }
+
+    function cerrarModalEditar() {
+      document.getElementById('modal-editar').style.display = 'none';
+      idEditar = null;
+    }
+
+    function confirmarEditar() {
+      const nuevoNombre = document.getElementById('editar-nombre').value.trim();
+      const nuevoApellido = document.getElementById('editar-apellido').value.trim();
+
+      if (!nuevoNombre || !nuevoApellido) {
+        alert("Completá ambos campos.");
+        return;
+      }
+
+      fetch(`${API_URL}/students/${idEditar}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firstName: nuevoNombre, lastName: nuevoApellido })
+      })
+        .then(() => {
+          alert("Estudiante actualizado correctamente.");
+          cerrarModalEditar();
+          listarEstudiantes();
+        })
+        .catch(err => {
+          alert("Error al actualizar estudiante: " + err.message);
+        });
+    }
+
+    // FUNCIONES DE EL MODAL ELIMINAR
+    function abrirModalEliminar(id) {
+      idEliminar = id;
+      document.getElementById('modal-eliminar').style.display = 'flex';
+    }
+
+    function cerrarModalEliminar() {
+      document.getElementById('modal-eliminar').style.display = 'none';
+      idEliminar = null;
+    }
+
+    function confirmarEliminar() {
+      fetch(`${API_URL}/students/${idEliminar}`, {
+        method: 'DELETE'
+      })
+        .then(() => {
+          alert("Estudiante eliminado correctamente.");
+          cerrarModalEliminar();
+          listarEstudiantes();
+        })
+        .catch(err => {
+          alert("Error al eliminar estudiante: " + err.message);
+        });
+    }
+  </script>
+</body>
+
+</html>
