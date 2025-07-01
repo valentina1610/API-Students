@@ -26,8 +26,7 @@ This project was created as a **practical work for the subject Web Design**.
     git clone https://github.com/yourusername/API-Students.git
     ```
 2. Open the `index.html` file in your browser.
-3. Make sure your API endpoint (for example, MockAPI) is active and correctly set in the JavaScript file.
-4. Use the web interface to create, view, update, and delete student records.
+3. Use the web interface to create, view, update, and delete student records.
 
 ## Team Members
 - Valentina Olmos
